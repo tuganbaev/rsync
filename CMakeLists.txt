@@ -12,7 +12,7 @@ add_library(redis
 add_executable(redis-server
   main.cpp
 )
-target_link_libraries(redis-server redis pthread)
+target_link_libraries(redis-server redis pthread boost_serialization)
 
 include_directories(contrib)
 
@@ -21,4 +21,4 @@ add_executable(run_test
   contrib/gmock_main.cc
   test/rsync_test.cpp
 )
-target_link_libraries(run_test redis pthread)
+target_link_libraries(run_test redis pthread boost_serialization)

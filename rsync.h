@@ -8,20 +8,6 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-struct Frame {
-    int32_t msg_id;
-    bool last;
-    std::vector<char> body;
-};
-
-class Connection {
-public:
-    virtual ~Connection() {}
-
-    virtual void WriteFrame(Frame* frame) = 0;
-    virtual void ReadFrame(Frame* frame) = 0;
-};
-
 enum class MsgId {
     GETLIST = 1,
     FILELIST = 2,
@@ -29,6 +15,32 @@ enum class MsgId {
     FILE = 4,
     FILE_PART = 5,
     OK = 6
+};
+
+struct Frame {
+    MsgId msg_id;
+
+    bool last;
+    std::string body;
+};
+
+class Connection {
+public:
+    virtual ~Connection() {}
+    virtual void WriteFrame(Frame* frame) = 0;
+    virtual void ReadFrame(Frame* frame) = 0;
+};
+
+class SocketConnection {
+public:
+    SocketConnection(int fd) : fd_(fd) {}
+//    ~SocketConnection();
+
+    virtual void WriteFrame(Frame* frame) {}
+    virtual void ReadFrame(Frame* frame) {}
+
+private:
+    int fd_;
 };
 
 struct FileList {
@@ -42,9 +54,15 @@ struct FileList {
 
 class Protocol {
 public:
+    Protocol(Connection* conn) : conn_(conn) {}
+
     void SendGetList();
     void SendFileList(const FileList& list);
 
-    MsgId RecvMsg();
-    FileList* GetFileList();
+    MsgId RecvMsg(); // reads next frame
+    FileList GetFileList();
+
+private:
+    Connection* conn_;
+    Frame last_received_;
 };
